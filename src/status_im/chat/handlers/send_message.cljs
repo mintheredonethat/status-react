@@ -29,16 +29,13 @@
      :from             identity
      :to               chat-id
      :timestamp        (time/now-ms)
-     :content          (assoc content :preview preview-string
-                                      :handler-data handler-data
+     :content          (assoc content :handler-data handler-data
                                       :type (name (:type command)))
      :content-type     (or content-type
                            (if request
                              content-type-command-request
                              content-type-command))
      :outgoing         true
-     :preview          preview-string
-     :rendered-preview preview
      :to-message       to-message
      :type             (:type command)
      :has-handler      (:has-handler command)
@@ -50,6 +47,7 @@
     (fn [{:keys [current-chat-id current-public-key current-account-id] :as db}
          [_ {:keys [chat-id] :as command-message}]]
       (let [text (get-in db [:chats current-chat-id :input-text])
+            _ (log/debug "ALWX >COMMAND" command-message)
             data {:command  command-message
                   :message  text
                   :chat-id  (or chat-id current-chat-id)
@@ -107,6 +105,7 @@
                                (cu/check-author-direction db chat-id))]
         (log/debug "Handler data: " request handler-data (dissoc params :commands :command-message))
         (dispatch [:update-message-overhead! chat-id network-status])
+        (log/debug "ALWX >PREPARED" (assoc params :command command'))
         (dispatch [::send-command! add-to-chat-id (assoc params :command command') hidden-params])
         (when (cu/console? chat-id)
           (dispatch `[:console-respond-command params]))

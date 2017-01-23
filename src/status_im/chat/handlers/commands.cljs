@@ -10,7 +10,8 @@
             [status-im.i18n :as i18n]
             [status-im.utils.datetime :as time]
             [status-im.utils.random :as random]
-            [status-im.utils.platform :as platform]))
+            [status-im.utils.platform :as platform]
+            [taoensso.timbre :as log]))
 
 (defn content-by-command
   [{:keys [type]} content]
@@ -269,6 +270,19 @@
                           path
                           parameters
                           #(dispatch [::validate! command-input data %]))))))
+
+;;TODO(alwx):
+(register-handler :request-command-content
+  (u/side-effect!
+    (fn [_ [_ chat-id {:keys [command params type contentCommand]}]]
+      (when contentCommand
+        (let [path    [:commands
+                       contentCommand
+                       :content]]
+          (status/call-jail chat-id
+                            path
+                            {:parameters params}
+                            #(log/debug "ALWX >DATA" %)))))))
 
 (register-handler :set-command-parameter
   (fn [db [_ {:keys [value parameter]}]]

@@ -36,7 +36,8 @@
                                     get-contact-translated]]
             [status-im.chat.utils :as cu]
             [clojure.string :as str]
-            [status-im.chat.handlers.console :as console]))
+            [status-im.chat.handlers.console :as console]
+            [taoensso.timbre :as log]))
 
 (def window-width (:width (get-dimensions "window")))
 
@@ -385,9 +386,10 @@
                                    :message-id message-id}])))
        :reagent-render
        (fn [{:keys [outgoing group-chat content-type content] :as message}]
+         (dispatch [:request-command-content chat-id (:content message)])
          [message-container message
           [touchable-highlight {:on-long-press (when (= content-type text-content-type)
-                                                        #(share content (label :t/message)))}
+                                                 #(share content (label :t/message)))}
            [view
             (let [incoming-group (and group-chat (not outgoing))]
               [message-content
